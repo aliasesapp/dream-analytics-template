@@ -1,15 +1,20 @@
-declare module 'duckdb' {
-  export class Database {
-    constructor(location: string);
+// global.d.ts
 
-    // Overloaded 'run' method to handle both with and without parameters
-    run(query: string, callback?: (err: Error | null) => void): void;
-    run(query: string, params: any[], callback: (err: Error | null) => void): void;
+declare module '@duckdb/duckdb-wasm' {
+  export default class DuckDB {
+    constructor(config: InitInput);
+    instantiate(): Promise<IShellInitOutput>;
+    run(query: string, params?: any[]): Promise<void>;
+    all(query: string, params?: any[]): Promise<any[]>;
+  }
 
-    // Overloaded 'all' method to handle both with and without parameters
-    all(query: string, callback: (err: Error | null, rows: any[]) => void): void;
-    all(query: string, params: any[], callback: (err: Error | null, rows: any[]) => void): void;
+  export interface InitInput {
+    locateFile: (file: string) => string;
+  }
 
-    // Add other methods as needed with appropriate typings
+  export interface IShellInitOutput {
+    memory: WebAssembly.Memory;
+    table: any;
+    exports: any;
   }
 }

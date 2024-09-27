@@ -12,7 +12,8 @@ const nextConfig = {
     }
 
     config.externals.push({
-      'duckdb': 'commonjs duckdb',
+      duckdb: 'commonjs duckdb',
+      'duckdb-wasm': 'commonjs duckdb-wasm',
       '@mapbox/node-pre-gyp': 'commonjs @mapbox/node-pre-gyp',
     });
 

@@ -1,19 +1,18 @@
 import path from 'path';
-
-let db: any;
+import DuckDB from 'duckdb';
 
 /**
  * Establishes a connection to the DuckDB database.
  * Uses dynamic imports to prevent bundling issues.
  */
-export async function getDuckDBConnection(): Promise<any> {
+let db: DuckDB.Database | null = null;
+
+export async function getDuckDBConnection(): Promise<DuckDB.Database> {
   if (!db) {
     if (typeof window === 'undefined') {
       try {
-        const duckdb = await import('duckdb');
         const dbPath = path.join(process.cwd(), 'data', 'analytics.db');
-        db = new duckdb.Database(dbPath);
-        await initializeDatabase(db);
+        db = new DuckDB.Database(dbPath);
       } catch (error) {
         console.error('Error initializing DuckDB:', error);
         throw new Error('Failed to initialize DuckDB');

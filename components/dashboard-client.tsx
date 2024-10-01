@@ -4,7 +4,9 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
+import { useRouter } from "next/navigation"
 
+import { CSVFile } from "@/lib/csv-manager"
 import {
   Table,
   TableBody,
@@ -14,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import ChartSettings from "@/components/chart-settings"
+import CSVUpload from "@/components/csv-upload"
 
 /**
  * Dynamically import the ChartClient component to ensure it's treated as a client component.
@@ -25,15 +28,24 @@ const ChartClient = dynamic(() => import("@/components/chart-client"), {
 interface DashboardData {
   [key: string]: any
 }
-
 interface DashboardClientProps {
-  rows: DashboardData[]
+  csvFiles: CSVFile[]
+  allData: { [key: string]: DashboardData[] }
 }
 
-const DashboardClient: React.FC<DashboardClientProps> = ({ rows }) => {
+const DashboardClient: React.FC<DashboardClientProps> = ({
+  csvFiles,
+  allData,
+}) => {
+  const router = useRouter()
+  const [selectedFile, setSelectedFile] = useState<string>(
+    csvFiles[0]?.id || ""
+  )
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [selectedValues, setSelectedValues] = useState<string[]>([])
   const [chartType, setChartType] = useState<"bar" | "line" | "pie">("bar")
+
+  const rows = allData[selectedFile] || []
 
   // Safely access the first row if available
   const sampleRow = rows.length > 0 ? rows[0] : null
@@ -82,10 +94,37 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ rows }) => {
     selectedCategory,
     selectedValues,
   ])
-
   // Early return if no data is available
   if (rows.length === 0) {
-    return <div>No data available.</div>
+    return (
+      <div className="container p-4">
+        <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+        <p className="mb-4">
+          No data available. Please upload a CSV file to get started.
+        </p>
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">CSV Files</h2>
+          <select
+            value={selectedFile}
+            onChange={(e) => setSelectedFile(e.target.value)}
+            className="mr-2"
+          >
+            {csvFiles.map((file) => (
+              <option key={file.id} value={file.id}>
+                {file.name}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => handleRemoveCSV(selectedFile)}
+            disabled={!selectedFile}
+          >
+            Remove Selected CSV
+          </button>
+          <CSVUpload />
+        </div>
+      </div>
+    )
   }
 
   // Early return if chart configurations are not set
@@ -104,6 +143,21 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ rows }) => {
     })
     return dataPoint
   })
+
+  const handleRemoveCSV = async (id: string) => {
+    try {
+      const response = await fetch(`/api/remove-csv?id=${id}`, {
+        method: "DELETE",
+      })
+      if (response.ok) {
+        router.refresh()
+      } else {
+        console.error("Failed to remove CSV")
+      }
+    } catch (error) {
+      console.error("Error removing CSV:", error)
+    }
+  }
 
   return (
     <section className="container p-4">
@@ -134,7 +188,11 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ rows }) => {
                 {rows.map((row, index) => (
                   <TableRow key={index}>
                     {columns.map((col) => (
-                      <TableCell key={col}>{row[col]}</TableCell>
+                      <TableCell key={col}>
+                        {row[col] instanceof Date
+                          ? row[col].toLocaleString()
+                          : String(row[col])}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))}
@@ -143,6 +201,24 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ rows }) => {
           </div>
         </div>
         <div className="w-full sm:w-1/3 md:w-1/4 order-1 sm:order-2">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-2">CSV Files</h2>
+            <select
+              value={selectedFile}
+              onChange={(e) => setSelectedFile(e.target.value)}
+              className="mr-2"
+            >
+              {csvFiles.map((file) => (
+                <option key={file.id} value={file.id}>
+                  {file.name}
+                </option>
+              ))}
+            </select>
+            <button onClick={() => handleRemoveCSV(selectedFile)}>
+              Remove Selected CSV
+            </button>
+            <CSVUpload />
+          </div>
           <ChartSettings
             columns={columns}
             selectedCategory={selectedCategory}

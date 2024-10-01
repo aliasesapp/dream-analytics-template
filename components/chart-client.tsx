@@ -45,6 +45,15 @@ const ChartClient: React.FC<ChartClientProps> = ({
   valueKeys,
   chartType = "bar",
 }) => {
+  // Sort the data based on the categoryKey
+  const sortedData = React.useMemo(() => {
+    return [...data].sort((a, b) => {
+      if (a[categoryKey] < b[categoryKey]) return -1
+      if (a[categoryKey] > b[categoryKey]) return 1
+      return 0
+    })
+  }, [data, categoryKey])
+
   /**
    * Generate dynamic Bar components based on valueKeys
    */
@@ -94,7 +103,7 @@ const ChartClient: React.FC<ChartClientProps> = ({
       case "line":
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={data}>
+            <LineChart data={sortedData}>
               <XAxis dataKey={categoryKey} />
               <YAxis />
               <Tooltip />
@@ -106,7 +115,7 @@ const ChartClient: React.FC<ChartClientProps> = ({
       case "pie":
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
+            <PieChart data={sortedData} dataKey={valueKeys[0]}>
               <Tooltip />
               <Legend />
               {renderPies()}
@@ -117,7 +126,7 @@ const ChartClient: React.FC<ChartClientProps> = ({
       default:
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={data}>
+            <BarChart data={sortedData}>
               <XAxis dataKey={categoryKey} />
               <YAxis />
               <Tooltip />

@@ -16,7 +16,7 @@ const DashboardPage = async () => {
     const query = `
       SELECT *
       FROM read_csv_auto('${csvFile.path}')
-      LIMIT 100
+      LIMIT 500
     `
 
     const rows: DashboardData[] = await new Promise((resolve, reject) => {
